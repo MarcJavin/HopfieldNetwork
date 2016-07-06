@@ -5,7 +5,7 @@
 
 using namespace std;
 
-const int THRESHOLD = 20;
+const int THRESHOLD = 125;
 
 Hopfield::Hopfield(int height, int width):width(width), height(height)
 {
@@ -21,6 +21,8 @@ Hopfield::Hopfield(int height, int width):width(width), height(height)
 void Hopfield::addPattern(const cv::Mat &pattern)
 {
 	std::vector<signed char> array = matrixToVector(pattern);
+
+	if(array.size()==0) return;
 
 	patterns.push_back(array);
 }
@@ -41,7 +43,7 @@ void Hopfield::calculateWeightsHebbian()
 			}
 		}
 	}
-	
+
 	//~ cout << "weights : " << weights << endl;
 }
 
@@ -60,36 +62,36 @@ void Hopfield::calculateWeightsStorkey()
 				h1 += weights.at<double>(n1,n11)*patterns[i][n11];
 			}
 			h.push_back(h1);
-			
+
 			for(int n2 = 0; n2<n1; n2++)
 			{
 				double weight = patterns[i][n1]*patterns[i][n2];
-				
+
 				//j!=n2
 				h1 -= weights.at<double>(n1,n2)*patterns[i][n2];
-				
+
 				double h2 = h[n2] - weights.at<double>(n1,n2)*patterns[i][n1];
-				
+
 				weights.at<double>(n1,n2) += (weight - h1*patterns[i][n2] - h2*patterns[i][n1]);
 				weights.at<double>(n2,n1) += (weight - h1*patterns[i][n2] - h2*patterns[i][n1]);
-				
+
 			}
 		}
 	}
-	
+
 }
 
 
 void Hopfield::calculateWeightsOja()
 {
-	
+
 }
 
 
 void Hopfield::compare(const cv::Mat &input)
 {
 	vector<signed char> image = matrixToVector(input);
-	
+
 	bool stable = false;
 	char z = 0;
 	int change = 0;
@@ -98,18 +100,18 @@ void Hopfield::compare(const cv::Mat &input)
 		stable = true;
 		//random order for the neurons
 		random_shuffle(order.begin(), order.end());
-		
+
 		//on met a jour chaque neurone
 		for(int i = 0; i < size; i++)
 		{
 			int node = order[i];
 			int sum = 0;
-			
+
 			for(int pnode = 0; pnode < size; pnode++)
 			{
 				sum += weights.at<double>(node,pnode)*image[pnode];
 			}
-			if(sum >= 0 && image[node]==-1) 
+			if(sum >= 0 && image[node]==-1)
 			{
 				image[node] = 1;
 				stable = false;
@@ -122,11 +124,11 @@ void Hopfield::compare(const cv::Mat &input)
 				change++;
 			}
 		}
-		
+
 		if(z%100 == 0)
 		{
 			cv::Mat img(height, width, CV_8UC1, cv::Scalar(0));
-	
+
 			for(int l = 0; l < height; l++)
 			{
 				for(int c=0; c < width; c++)
@@ -136,18 +138,18 @@ void Hopfield::compare(const cv::Mat &input)
 					}
 				}
 			}
-			
+
 			string teub = "etape.jpg";
 			cv::imwrite(teub,img);
 		}
 
 		z++;
-		
+
 	}
-	
+
 	cv::Mat img(height, width, CV_8UC1, cv::Scalar(0));
-	
-	
+
+
 	for(int l = 0; l < height; l++)
 	{
 		for(int c=0; c < width; c++)
@@ -157,10 +159,10 @@ void Hopfield::compare(const cv::Mat &input)
 			}
 		}
 	}
-	
+
 	cout << change << endl;
 	cv::imwrite("result.jpg",img);
-	
+
 }
 
 //only serialize the weights matrix
@@ -169,7 +171,7 @@ void Hopfield::serialize(string name) const
 	cv::imwrite(name, weights);
 }
 
-void Hopfield::deserialize(string name) 
+void Hopfield::deserialize(string name)
 {
 	weights = cv::imread(name, -1);
 }
@@ -180,7 +182,7 @@ vector<signed char> Hopfield::matrixToVector(const cv::Mat &matrix) const
 	vector<signed char> array;
 
 	if(matrix.rows==height && matrix.cols==width)
-	{	
+	{
 		for(int i = 0; i<matrix.rows; i++)
 		{
 			for(int j = 0; j<matrix.cols; j++)
@@ -200,7 +202,7 @@ vector<signed char> Hopfield::matrixToVector(const cv::Mat &matrix) const
 	{
 		cerr << "The matrix has not the right dimension" << endl;
 	}
-	
+
 	return array;
 }
 
